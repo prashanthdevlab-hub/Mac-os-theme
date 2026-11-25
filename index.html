@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#8c9ed2">
+  <title>macOS Desktop</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="desktop" id="desktop">
+    <header class="menu-bar">
+      <button class="menu-button apple-menu" id="appleMenuButton" aria-label="Apple menu"></button>
+      <button class="menu-button app-name" id="appName">Finder</button>
+      <div class="menu-left">
+        <button class="menu-button file-menu" id="fileMenuButton">File</button>
+        <button class="menu-button">Edit</button>
+        <button class="menu-button">View</button>
+        <button class="menu-button">Go</button>
+        <button class="menu-button">Window</button>
+        <button class="menu-button">Help</button>
+      </div>
+      <div class="menu-status">
+        <button class="status-button" id="spotlightButton" aria-label="Search">⌕</button>
+        <button class="status-button" id="themeButton" aria-label="Toggle appearance">◐</button>
+        <button class="status-button control-button" id="controlButton" aria-label="Control Center"><span class="switch-icon"></span></button>
+        <time id="clock">Mon Nov 25  9:41 AM</time>
+      </div>
+    </header>
+
+    <div class="apple-dropdown menu-dropdown" id="appleMenu">
+      <button data-action="about">About This Mac</button>
+      <hr>
+      <button data-action="systemSettings">System Settings…</button>
+      <button data-action="appStore">App Store…</button>
+      <hr>
+      <button data-action="lock">Lock Screen</button>
+    </div>
+
+    <div class="control-center" id="controlCenter">
+      <div class="control-grid">
+        <div class="control-card appearance-card">
+          <span class="control-icon">◐</span>
+          <button id="appearanceToggle">Appearance</button>
+          <span id="appearanceLabel">Light</span>
+        </div>
+        <div class="control-card">
+          <span class="control-icon">▧</span>
+          <button id="wallpaperToggle">Wallpaper</button>
+        </div>
+      </div>
+    </div>
+
+    <main class="desktop-icons" aria-label="Desktop icons">
+      <button class="desktop-icon" data-app="finder">
+        <span class="icon finder-icon"><span class="finder-face"></span></span>
+        <span>Macintosh HD</span>
+      </button>
+      <button class="desktop-icon" data-app="notes">
+        <span class="icon notes-icon"><span>✎</span></span>
+        <span>Quick Note</span>
+      </button>
+      <button class="desktop-icon" data-app="terminal">
+        <span class="icon terminal-icon"><span>&gt;_</span></span>
+        <span>Terminal</span>
+      </button>
+    </main>
+
+    <section class="windows" id="windows"></section>
+
+    <nav class="dock" id="dock" aria-label="Applications">
+      <button class="dock-item" data-app="finder" aria-label="Finder"><span class="dock-icon finder-icon"><span class="finder-face"></span></span><span class="dock-dot"></span></button>
+      <button class="dock-item" data-app="notes" aria-label="Notes"><span class="dock-icon notes-icon"><span>✎</span></span><span class="dock-dot"></span></button>
+      <button class="dock-item" data-app="terminal" aria-label="Terminal"><span class="dock-icon terminal-icon"><span>&gt;_</span></span><span class="dock-dot"></span></button>
+      <button class="dock-item" data-app="calculator" aria-label="Calculator"><span class="dock-icon calculator-icon"><span>＋<br>− × ÷</span></span><span class="dock-dot"></span></button>
+      <button class="dock-item" data-app="about" aria-label="About This Mac"><span class="dock-icon about-icon"><span></span></span><span class="dock-dot"></span></button>
+    </nav>
+
+    <div class="context-menu" id="contextMenu">
+      <button data-context="desktopInfo">Get Info</button>
+      <hr>
+      <button data-context="newFolder">New Folder</button>
+      <button data-context="spotlight">Spotlight Search</button>
+      <hr>
+      <button data-context="wallpaper">Change Wallpaper</button>
+      <button data-context="darkMode">Toggle Dark Mode</button>
+    </div>
+
+    <div class="spotlight" id="spotlight" aria-hidden="true">
+      <div class="spotlight-search">
+        <span>⌕</span>
+        <input id="spotlightInput" type="text" placeholder="Spotlight Search" autocomplete="off">
+      </div>
+      <div class="spotlight-results" id="spotlightResults"></div>
+    </div>
+
+    <div class="toast" id="toast" role="status"></div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
