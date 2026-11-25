@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#8c9ed2">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://images.unsplash.com; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https://images.unsplash.com; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>macOS Desktop</title>
   <link rel="stylesheet" href="style.css">
@@ -12,7 +12,7 @@
 <body>
   <div class="desktop" id="desktop">
     <header class="menu-bar">
-      <button class="menu-button apple-menu" id="appleMenuButton" aria-label="Apple menu"></button>
+      <button class="menu-button apple-menu" id="appleMenuButton" aria-label="Apple menu" aria-haspopup="true" aria-expanded="false" aria-controls="appleMenu"></button>
       <button class="menu-button app-name" id="appName">Finder</button>
       <div class="menu-left">
         <button class="menu-button file-menu" id="fileMenuButton">File</button>
@@ -23,14 +23,14 @@
         <button class="menu-button">Help</button>
       </div>
       <div class="menu-status">
-        <button class="status-button" id="spotlightButton" aria-label="Search">⌕</button>
+        <button class="status-button" id="spotlightButton" aria-label="Search" aria-controls="spotlight" aria-expanded="false">⌕</button>
         <button class="status-button" id="themeButton" aria-label="Toggle appearance">◐</button>
-        <button class="status-button control-button" id="controlButton" aria-label="Control Center"><span class="switch-icon"></span></button>
+        <button class="status-button control-button" id="controlButton" aria-label="Control Center" aria-haspopup="true" aria-expanded="false" aria-controls="controlCenter"><span class="switch-icon"></span></button>
         <time id="clock">Mon Nov 25  9:41 AM</time>
       </div>
     </header>
 
-    <div class="apple-dropdown menu-dropdown" id="appleMenu">
+    <div class="apple-dropdown menu-dropdown" id="appleMenu" aria-hidden="true">
       <button data-action="about">About This Mac</button>
       <hr>
       <button data-action="systemSettings">System Settings…</button>
@@ -39,7 +39,7 @@
       <button data-action="lock">Lock Screen</button>
     </div>
 
-    <div class="control-center" id="controlCenter">
+    <div class="control-center" id="controlCenter" aria-hidden="true">
       <div class="control-grid">
         <div class="control-card appearance-card">
           <span class="control-icon">◐</span>
@@ -53,7 +53,7 @@
       </div>
     </div>
 
-    <main class="desktop-icons" aria-label="Desktop icons">
+    <main class="desktop-icons" id="desktopIcons" aria-label="Desktop icons" tabindex="-1">
       <button class="desktop-icon" data-app="finder">
         <span class="icon finder-icon"><span class="finder-face"></span></span>
         <span>Macintosh HD</span>
@@ -68,7 +68,7 @@
       </button>
     </main>
 
-    <section class="windows" id="windows"></section>
+    <section class="windows" id="windows" aria-label="Open app windows"></section>
 
     <nav class="dock" id="dock" aria-label="Applications">
       <button class="dock-item" data-app="finder" aria-label="Finder"><span class="dock-icon finder-icon"><span class="finder-face"></span></span><span class="dock-dot"></span></button>
@@ -78,7 +78,7 @@
       <button class="dock-item" data-app="about" aria-label="About This Mac"><span class="dock-icon about-icon"><span></span></span><span class="dock-dot"></span></button>
     </nav>
 
-    <div class="context-menu" id="contextMenu">
+    <div class="context-menu" id="contextMenu" aria-hidden="true">
       <button data-context="desktopInfo">Get Info</button>
       <hr>
       <button data-context="newFolder">New Folder</button>
@@ -88,12 +88,12 @@
       <button data-context="darkMode">Toggle Dark Mode</button>
     </div>
 
-    <div class="spotlight" id="spotlight" aria-hidden="true">
+    <div class="spotlight" id="spotlight" role="search" aria-label="Spotlight Search" aria-hidden="true" inert>
       <div class="spotlight-search">
         <span>⌕</span>
-        <input id="spotlightInput" type="text" placeholder="Spotlight Search" autocomplete="off">
+        <input id="spotlightInput" type="text" placeholder="Spotlight Search" aria-label="Search applications and actions" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="spotlightResults" autocomplete="off">
       </div>
-      <div class="spotlight-results" id="spotlightResults"></div>
+      <div class="spotlight-results" id="spotlightResults" role="listbox" aria-label="Search results"></div>
     </div>
 
     <div class="toast" id="toast" role="status"></div>

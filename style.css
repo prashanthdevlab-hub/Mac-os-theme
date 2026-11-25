@@ -10,6 +10,8 @@
 html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
 button, input, textarea { font: inherit; }
 button { cursor: default; }
+:focus-visible { outline: 3px solid #0a84ff; outline-offset: 2px; }
+input:focus-visible, textarea:focus-visible { outline-offset: -2px; }
 
 .desktop {
   position: relative;
@@ -84,7 +86,7 @@ body.dark .desktop::after { content:""; position:absolute; inset:0; background:r
 .window.hidden { display:none; }
 .window.minimized { opacity:0; transform:scale(.1) translate(-400%, 700%); pointer-events:none; transition:all 220ms cubic-bezier(.4,0,.2,1); }
 .window.zoomed { top:8px!important; left:8px!important; width:calc(100% - 16px)!important; height:calc(100% - 16px)!important; }
-.titlebar { height:38px; flex:none; display:flex; align-items:center; position:relative; background:linear-gradient(var(--window),rgba(170,170,170,.12)); border-bottom:1px solid var(--border); user-select:none; }
+.titlebar { height:38px; flex:none; display:flex; align-items:center; position:relative; background:linear-gradient(var(--window),rgba(170,170,170,.12)); border-bottom:1px solid var(--border); user-select:none; touch-action:none; }
 .traffic-lights { display:flex; gap:8px; margin-left:12px; z-index:2; }
 .traffic-lights button { width:12px; height:12px; border:0; border-radius:50%; padding:0; }
 .close-light { background:#ff5f57; } .minimize-light { background:#febc2e; } .zoom-light { background:#28c840; }
@@ -171,7 +173,7 @@ body.dark .calc-grid button.function { background:rgba(65,65,68,.96); }
 
 @media (max-width:700px) {
   .menu-left { display:none; }
-  .window { width:calc(100% - 20px)!important; height:calc(100% - 20px)!important; left:10px!important; top:10px!important; }
+  .window { width:calc(100% - 20px)!important; max-width:calc(100% - 20px); min-width:0; height:calc(100% - 20px)!important; max-height:calc(100% - 20px); left:10px!important; top:10px!important; }
   .desktop-icons { right:8px; }
   .dock { max-width:calc(100% - 12px); }
   .dock-item, .dock-icon { width:43px; height:43px; }
@@ -179,3 +181,13 @@ body.dark .calc-grid button.function { background:rgba(65,65,68,.96); }
   .finder { grid-template-columns:115px 1fr; }
   .notes-app { grid-template-columns:140px 1fr; }
 }
+
+@media (hover:none) {
+  .dock-item:hover { transform:none; margin:0; }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  *, *::before, *::after { scroll-behavior:auto!important; transition-duration:0.01ms!important; animation-duration:0.01ms!important; animation-iteration-count:1!important; }
+}
+
+input:focus-visible, textarea:focus-visible { outline:2px solid #0a84ff; outline-offset:-2px; }

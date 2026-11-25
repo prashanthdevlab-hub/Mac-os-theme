@@ -8,8 +8,14 @@ const contextMenu = document.getElementById('contextMenu');
 const controlCenter = document.getElementById('controlCenter');
 const appleMenu = document.getElementById('appleMenu');
 const appName = document.getElementById('appName');
+const appleMenuButton = document.getElementById('appleMenuButton');
+const controlButton = document.getElementById('controlButton');
+const spotlightButton = document.getElementById('spotlightButton');
 let zTop = 100;
 let wallpaperIndex = 0;
+let spotlightSelectedIndex = 0;
+let spotlightReturnFocus = null;
+let contextMenuReturnFocus = null;
 const wallpapers = ['sonoma', 'ventura', 'monterey'];
 
 const appInfo = {
@@ -61,20 +67,39 @@ updateClock();
 setInterval(updateClock, 1000);
 
 function closeMenus() {
+  const activeMenu = [appleMenu, controlCenter, contextMenu].find(menu => menu.contains(document.activeElement));
+  if (activeMenu) {
+    const focusTarget = activeMenu === appleMenu ? appleMenuButton
+      : activeMenu === controlCenter ? controlButton : contextMenuReturnFocus;
+    focusTarget?.focus();
+  }
   appleMenu.classList.remove('open');
+  appleMenu.setAttribute('aria-hidden', 'true');
+  appleMenuButton.setAttribute('aria-expanded', 'false');
   controlCenter.classList.remove('open');
+  controlCenter.setAttribute('aria-hidden', 'true');
+  controlButton.setAttribute('aria-expanded', 'false');
   contextMenu.classList.remove('open');
+  contextMenu.setAttribute('aria-hidden', 'true');
 }
 
-document.getElementById('appleMenuButton').addEventListener('click', event => {
+appleMenuButton.addEventListener('click', event => {
   event.stopPropagation();
+  const isOpen = appleMenu.classList.toggle('open');
   controlCenter.classList.remove('open');
-  appleMenu.classList.toggle('open');
+  controlCenter.setAttribute('aria-hidden', 'true');
+  controlButton.setAttribute('aria-expanded', 'false');
+  appleMenu.setAttribute('aria-hidden', String(!isOpen));
+  appleMenuButton.setAttribute('aria-expanded', String(isOpen));
 });
-document.getElementById('controlButton').addEventListener('click', event => {
+controlButton.addEventListener('click', event => {
   event.stopPropagation();
   appleMenu.classList.remove('open');
-  controlCenter.classList.toggle('open');
+  appleMenu.setAttribute('aria-hidden', 'true');
+  appleMenuButton.setAttribute('aria-expanded', 'false');
+  const isOpen = controlCenter.classList.toggle('open');
+  controlCenter.setAttribute('aria-hidden', String(!isOpen));
+  controlButton.setAttribute('aria-expanded', String(isOpen));
 });
 desktop.addEventListener('click', event => {
   if (!event.target.closest('.menu-dropdown, .control-center, .context-menu, .spotlight')) closeMenus();
@@ -83,7 +108,7 @@ desktop.addEventListener('click', event => {
 
 document.getElementById('themeButton').addEventListener('click', toggleTheme);
 document.getElementById('appearanceToggle').addEventListener('click', toggleTheme);
-document.getElementById('wallpaperToggle').addEventListener('click', () => { cycleWallpaper(); controlCenter.classList.remove('open'); });
+document.getElementById('wallpaperToggle').addEventListener('click', () => { cycleWallpaper(); closeMenus(); });
 
 function toggleTheme() {
   document.body.classList.toggle('dark');
@@ -117,7 +142,10 @@ function openApp(appId) {
   const existing = document.querySelector(`.window[data-app="${appId}"]`);
   if (existing) {
     existing.classList.remove('hidden', 'minimized');
+    existing.inert = false;
+    existing.setAttribute('aria-hidden', 'false');
     focusWindow(existing);
+    existing.focus();
   } else {
     createWindow(appId);
   }
@@ -131,6 +159,10 @@ function createWindow(appId) {
   const windowEl = document.createElement('article');
   windowEl.className = 'window';
   windowEl.dataset.app = appId;
+  windowEl.setAttribute('role', 'dialog');
+  windowEl.setAttribute('aria-modal', 'false');
+  windowEl.setAttribute('aria-labelledby', `window-title-${appId}`);
+  windowEl.tabIndex = -1;
   windowEl.style.zIndex = ++zTop;
   const offset = (document.querySelectorAll('.window').length % 7) * 24;
   windowEl.style.left = `calc(50% - ${appId === 'calculator' ? 145 : 320}px + ${offset}px)`;
@@ -140,18 +172,22 @@ function createWindow(appId) {
   windowEl.innerHTML = `
     <header class="titlebar">
       <div class="traffic-lights">
-        <button class="close-light" aria-label="Close"></button>
-        <button class="minimize-light" aria-label="Minimize"></button>
-        <button class="zoom-light" aria-label="Zoom"></button>
+        <button class="close-light" aria-label="Close ${info.title} window"></button>
+        <button class="minimize-light" aria-label="Minimize ${info.title} window"></button>
+        <button class="zoom-light" aria-label="Zoom ${info.title} window" aria-pressed="false"></button>
       </div>
-      <span class="window-title">${info.title}</span>
+      <span class="window-title" id="window-title-${appId}">${info.title}</span>
     </header>
     <div class="window-content"></div>`;
   windows.appendChild(windowEl);
+  windowEl.focus();
   windowEl.querySelector('.close-light').addEventListener('click', () => closeWindow(windowEl));
-  windowEl.querySelector('.minimize-light').addEventListener('click', () => windowEl.classList.add('minimized'));
-  windowEl.querySelector('.zoom-light').addEventListener('click', () => windowEl.classList.toggle('zoomed'));
-  windowEl.addEventListener('mousedown', () => focusWindow(windowEl));
+  windowEl.querySelector('.minimize-light').addEventListener('click', () => minimizeWindow(windowEl));
+  windowEl.querySelector('.zoom-light').addEventListener('click', event => {
+    const zoomed = windowEl.classList.toggle('zoomed');
+    event.currentTarget.setAttribute('aria-pressed', String(zoomed));
+  });
+  windowEl.addEventListener('pointerdown', () => focusWindow(windowEl));
   makeDraggable(windowEl);
   renderApp(windowEl.querySelector('.window-content'), appId);
   document.querySelector(`.dock-item[data-app="${appId}"]`)?.classList.add('open');
@@ -162,8 +198,18 @@ function closeWindow(windowEl) {
   const appId = windowEl.dataset.app;
   windowEl.remove();
   if (!document.querySelector(`.window[data-app="${appId}"]`)) {
-    document.querySelector(`.dock-item[data-app="${appId}"]`)?.classList.remove('open');
+    const dockItem = document.querySelector(`.dock-item[data-app="${appId}"]`);
+    dockItem?.classList.remove('open');
+    (dockItem || document.getElementById('desktopIcons')).focus();
   }
+  updateAppName();
+}
+
+function minimizeWindow(windowEl) {
+  document.querySelector(`.dock-item[data-app="${windowEl.dataset.app}"]`)?.focus();
+  windowEl.classList.add('minimized');
+  windowEl.inert = true;
+  windowEl.setAttribute('aria-hidden', 'true');
   updateAppName();
 }
 
@@ -180,18 +226,36 @@ function updateAppName() {
 
 function makeDraggable(windowEl) {
   const titlebar = windowEl.querySelector('.titlebar');
-  let startX = 0, startY = 0, originX = 0, originY = 0;
-  titlebar.addEventListener('mousedown', event => {
-    if (event.target.closest('button') || windowEl.classList.contains('zoomed')) return;
-    startX = event.clientX; startY = event.clientY;
-    const rect = windowEl.getBoundingClientRect(); originX = rect.left; originY = rect.top;
-    function move(event) {
-      windowEl.style.left = `${Math.max(0, Math.min(innerWidth - 100, originX + event.clientX - startX))}px`;
-      windowEl.style.top = `${Math.max(29, originY + event.clientY - startY)}px`;
-    }
-    function stop() { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', stop); }
-    document.addEventListener('mousemove', move); document.addEventListener('mouseup', stop);
+  let dragState = null;
+
+  titlebar.addEventListener('pointerdown', event => {
+    if (!event.isPrimary || event.button !== 0 || event.target.closest('button') || windowEl.classList.contains('zoomed')) return;
+    const bounds = windows.getBoundingClientRect();
+    const rect = windowEl.getBoundingClientRect();
+    dragState = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      originX: rect.left - bounds.left,
+      originY: rect.top - bounds.top
+    };
+    titlebar.setPointerCapture(event.pointerId);
   });
+
+  titlebar.addEventListener('pointermove', event => {
+    if (!dragState || dragState.pointerId !== event.pointerId) return;
+    const maxLeft = Math.max(0, windows.clientWidth - windowEl.offsetWidth);
+    const maxTop = Math.max(0, windows.clientHeight - windowEl.offsetHeight);
+    windowEl.style.left = `${Math.max(0, Math.min(maxLeft, dragState.originX + event.clientX - dragState.startX))}px`;
+    windowEl.style.top = `${Math.max(0, Math.min(maxTop, dragState.originY + event.clientY - dragState.startY))}px`;
+  });
+
+  function stopDragging(event) {
+    if (dragState && dragState.pointerId === event.pointerId) dragState = null;
+  }
+  titlebar.addEventListener('pointerup', stopDragging);
+  titlebar.addEventListener('pointercancel', stopDragging);
+  titlebar.addEventListener('lostpointercapture', stopDragging);
 }
 
 function renderApp(container, appId) {
@@ -395,60 +459,152 @@ function renderSpotlight(query='') {
     {name:'Toggle Dark Mode', detail:'System Action', action:'theme', icon:'◐'}
   ];
   const matches = items.filter(item => `${item.name} ${item.detail}`.toLowerCase().includes(query.toLowerCase()));
-  spotlightResults.innerHTML = matches.length ? matches.map((item,i)=>`<button class="spotlight-result ${i===0?'selected':''}" data-app="${item.app||''}" data-action="${item.action||''}"><span class="result-icon">${item.icon}</span><span><strong>${item.name}</strong><small>${item.detail}</small></span></button>`).join('') : `<div class="spotlight-result"><span>No Results</span></div>`;
+  spotlightSelectedIndex = matches.length ? 0 : -1;
+  spotlightResults.innerHTML = matches.length ? matches.map((item,i)=>`<button class="spotlight-result ${i===spotlightSelectedIndex?'selected':''}" id="spotlight-result-${i}" role="option" aria-selected="${i===spotlightSelectedIndex}" data-app="${item.app||''}" data-action="${item.action||''}"><span class="result-icon">${item.icon}</span><span><strong>${item.name}</strong><small>${item.detail}</small></span></button>`).join('') : `<div class="spotlight-result"><span>No Results</span></div>`;
+  updateSpotlightSelection();
 }
 
-function openSpotlight() {
-  closeMenus();
-  spotlight.classList.add('open'); spotlight.setAttribute('aria-hidden','false');
-  spotlightInput.value=''; renderSpotlight(); setTimeout(()=>spotlightInput.focus(),50);
+function updateSpotlightSelection() {
+  const results = spotlightResults.querySelectorAll('[role="option"]');
+  results.forEach((result, index) => {
+    const selected = index === spotlightSelectedIndex;
+    result.classList.toggle('selected', selected);
+    result.setAttribute('aria-selected', String(selected));
+  });
+  if (spotlightSelectedIndex >= 0 && results[spotlightSelectedIndex]) {
+    spotlightInput.setAttribute('aria-activedescendant', results[spotlightSelectedIndex].id);
+  } else {
+    spotlightInput.removeAttribute('aria-activedescendant');
+  }
 }
-function closeSpotlight() { spotlight.classList.remove('open'); spotlight.setAttribute('aria-hidden','true'); }
-document.getElementById('spotlightButton').addEventListener('click', openSpotlight);
+
+function openSpotlight(returnFocus = document.activeElement) {
+  closeMenus();
+  spotlightReturnFocus = returnFocus;
+  spotlight.inert = false;
+  spotlight.classList.add('open'); spotlight.setAttribute('aria-hidden','false');
+  spotlightButton.setAttribute('aria-expanded', 'true');
+  spotlightInput.setAttribute('aria-expanded', 'true');
+  spotlightInput.value=''; renderSpotlight(); setTimeout(() => {
+    if (spotlight.classList.contains('open')) spotlightInput.focus();
+  }, 50);
+}
+function closeSpotlight(restoreFocus = false) {
+  if (restoreFocus || spotlight.contains(document.activeElement)) {
+    const focusTarget = spotlightReturnFocus?.isConnected && !spotlight.contains(spotlightReturnFocus)
+      ? spotlightReturnFocus : spotlightButton;
+    focusTarget.focus();
+  }
+  spotlight.classList.remove('open');
+  spotlight.inert = true;
+  spotlight.setAttribute('aria-hidden','true');
+  spotlightButton.setAttribute('aria-expanded', 'false');
+  spotlightInput.setAttribute('aria-expanded', 'false');
+}
+spotlightButton.addEventListener('click', openSpotlight);
 spotlightInput.addEventListener('input', () => renderSpotlight(spotlightInput.value));
 spotlightResults.addEventListener('click', event => {
   const result = event.target.closest('.spotlight-result'); if (!result) return;
-  if (result.dataset.app) openApp(result.dataset.app);
+  if (result.dataset.app) {
+    openApp(result.dataset.app);
+    return;
+  }
   if (result.dataset.action === 'wallpaper') cycleWallpaper();
   if (result.dataset.action === 'theme') toggleTheme();
-  closeSpotlight();
+  closeSpotlight(true);
 });
 
 document.addEventListener('keydown', event => {
-  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+  const key = event.key.toLowerCase();
+  const modifier = event.ctrlKey || event.metaKey;
+
+  if ((event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10'))
+    && (event.target.closest?.('.desktop-icon') || event.target === document.getElementById('desktopIcons'))) {
+    event.preventDefault();
+    showContextMenu(innerWidth / 2, innerHeight / 2, event.target.closest?.('.desktop-icon') || document.getElementById('desktopIcons'));
+  }
+
+  if (spotlight.classList.contains('open') && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
+    const resultCount = spotlightResults.querySelectorAll('[role="option"]').length;
+    if (resultCount) {
+      event.preventDefault();
+      spotlightSelectedIndex = (spotlightSelectedIndex + (event.key === 'ArrowDown' ? 1 : -1) + resultCount) % resultCount;
+      updateSpotlightSelection();
+    }
+  }
+  if ((modifier && key === 'k')) {
     event.preventDefault();
     openSpotlight();
   }
   if (spotlight.classList.contains('open') && event.key === 'Enter') {
-    spotlightResults.querySelector('.spotlight-result[data-app], .spotlight-result[data-action]')?.click();
+    event.preventDefault();
+    spotlightResults.querySelector('[aria-selected="true"]')?.click();
   }
-  if (event.key === 'Escape') { closeSpotlight(); closeMenus(); }
+  if (modifier && (key === 'w' || key === 'm')) {
+    const activeWindow = Array.from(document.querySelectorAll('.window:not(.minimized)'))
+      .sort((a, b) => Number(b.style.zIndex) - Number(a.style.zIndex))[0];
+    if (activeWindow) {
+      event.preventDefault();
+      if (key === 'w') closeWindow(activeWindow);
+      else minimizeWindow(activeWindow);
+    }
+  }
+
+  const openMenu = desktop.querySelector('.menu-dropdown.open, .control-center.open, .context-menu.open');
+  if (openMenu && ['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
+    const items = Array.from(openMenu.querySelectorAll('button:not([disabled])'));
+    if (!items.length) return;
+    event.preventDefault();
+    const currentIndex = items.indexOf(document.activeElement);
+    const nextIndex = event.key === 'Home' ? 0
+      : event.key === 'End' ? items.length - 1
+      : event.key === 'ArrowDown' ? (currentIndex + 1 + items.length) % items.length
+      : (currentIndex <= 0 ? items.length - 1 : currentIndex - 1);
+    items[nextIndex].focus();
+  }
+  if (event.key === 'Escape') {
+    const restoreMenuFocus = appleMenu.classList.contains('open') ? appleMenuButton
+      : controlCenter.classList.contains('open') ? controlButton
+      : contextMenu.classList.contains('open') ? contextMenuReturnFocus : null;
+    closeSpotlight(spotlight.classList.contains('open'));
+    closeMenus();
+    restoreMenuFocus?.focus();
+  }
 });
 
 document.querySelectorAll('[data-app]').forEach(element => {
   element.addEventListener('click', event => {
     if (element.classList.contains('dock-item')) openApp(element.dataset.app);
+    if (element.classList.contains('desktop-icon') && event.detail === 0) openApp(element.dataset.app);
   });
   if (element.classList.contains('desktop-icon')) element.addEventListener('dblclick', () => openApp(element.dataset.app));
 });
 
+function showContextMenu(x, y, invoker) {
+  closeMenus();
+  contextMenuReturnFocus = invoker;
+  contextMenu.style.left = `${Math.max(0, Math.min(x, innerWidth - 220))}px`;
+  contextMenu.style.top = `${Math.max(29, Math.min(y, innerHeight - 220))}px`;
+  contextMenu.classList.add('open');
+  contextMenu.setAttribute('aria-hidden', 'false');
+  contextMenu.querySelector('button')?.focus();
+}
+
 desktop.addEventListener('contextmenu', event => {
   event.preventDefault();
   if (event.target.closest('.window, .dock, .menu-bar, .spotlight')) return;
-  closeMenus();
-  contextMenu.style.left = `${Math.max(0, Math.min(event.clientX, innerWidth - 220))}px`;
-  contextMenu.style.top = `${Math.max(29, Math.min(event.clientY, innerHeight - 220))}px`;
-  contextMenu.classList.add('open');
+  showContextMenu(event.clientX, event.clientY, event.target.closest('.desktop-icon') || document.getElementById('desktopIcons'));
 });
 
 contextMenu.addEventListener('click', event => {
   const action = event.target.dataset.context; if (!action) return;
-  if (action === 'spotlight') openSpotlight();
+  if (action === 'spotlight') openSpotlight(contextMenuReturnFocus);
   if (action === 'wallpaper') cycleWallpaper();
   if (action === 'darkMode') toggleTheme();
   if (action === 'desktopInfo') showToast('Macintosh HD · 128 GB available');
   if (action === 'newFolder') showToast('New Folder');
-  contextMenu.classList.remove('open');
+  closeMenus();
+  contextMenuReturnFocus?.focus();
 });
 
 appleMenu.addEventListener('click', event => {
@@ -457,7 +613,8 @@ appleMenu.addEventListener('click', event => {
   if (action === 'lock') showToast('Screen locked');
   if (action === 'systemSettings') showToast('System Settings');
   if (action === 'appStore') showToast('App Store');
-  appleMenu.classList.remove('open');
+  closeMenus();
+  if (action !== 'about') appleMenuButton.focus();
 });
 
 window.addEventListener('resize', () => {
@@ -467,5 +624,4 @@ window.addEventListener('resize', () => {
 });
 
 function init() { document.getElementById('appearanceLabel').textContent = document.body.classList.contains('dark') ? 'Dark' : 'Light'; }
-init();
 init();

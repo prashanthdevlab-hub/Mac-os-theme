@@ -11,6 +11,8 @@ A zero-dependency, macOS-inspired desktop interface built with vanilla HTML, CSS
 - Sonoma, Ventura, and Monterey wallpapers
 - Light and dark appearance modes
 - Persistent notes, theme, and wallpaper settings
+- Keyboard-operable Spotlight, menus, desktop icons, and app windows
+- Touch-friendly window dragging on mobile devices
 
 ## Run
 
@@ -21,6 +23,8 @@ python3 -m http.server 8000
 ```
 
 Then visit `http://localhost:8000`.
+
+Use `Ctrl+K` or `Cmd+K` to open Spotlight, arrow keys to select results, and `Enter` to launch. Use `Ctrl+W` or `Cmd+W` to close the active window and `Ctrl+M` or `Cmd+M` to minimize it.
 
 ## Notes
 
