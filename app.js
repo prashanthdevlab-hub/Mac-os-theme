@@ -20,13 +20,31 @@ const appInfo = {
   about: { title: 'About This Mac', icon: '' }
 };
 
-const savedTheme = localStorage.getItem('mac-theme');
-if (savedTheme === 'dark') document.body.classList.add('dark');
-const savedWallpaper = localStorage.getItem('mac-wallpaper');
-if (savedWallpaper) {
-  wallpaperIndex = Math.max(0, wallpapers.indexOf(savedWallpaper));
-  if (wallpaperIndex < 0) wallpaperIndex = 0;
+function getStoredValue(key) {
+  try {
+    return localStorage.getItem(key);
+  } catch (error) {
+    console.warn(`Unable to read "${key}" from browser storage.`, error);
+    return null;
+  }
 }
+
+function setStoredValue(key, value) {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch (error) {
+    console.warn(`Unable to save "${key}" to browser storage.`, error);
+    showToast('Changes could not be saved in this browser.');
+    return false;
+  }
+}
+
+const savedTheme = getStoredValue('mac-theme');
+if (savedTheme === 'dark') document.body.classList.add('dark');
+const savedWallpaper = getStoredValue('mac-wallpaper');
+const savedWallpaperIndex = wallpapers.indexOf(savedWallpaper);
+if (savedWallpaperIndex >= 0) wallpaperIndex = savedWallpaperIndex;
 applyWallpaper();
 
 function escapeHtml(value) {
@@ -70,19 +88,20 @@ document.getElementById('wallpaperToggle').addEventListener('click', () => { cyc
 function toggleTheme() {
   document.body.classList.toggle('dark');
   const dark = document.body.classList.contains('dark');
-  localStorage.setItem('mac-theme', dark ? 'dark' : 'light');
+  setStoredValue('mac-theme', dark ? 'dark' : 'light');
   document.getElementById('appearanceLabel').textContent = dark ? 'Dark' : 'Light';
 }
 
 function applyWallpaper() {
   desktop.classList.remove('wallpaper-sonoma', 'wallpaper-ventura', 'wallpaper-monterey');
   desktop.classList.add(`wallpaper-${wallpapers[wallpaperIndex]}`);
-  localStorage.setItem('mac-wallpaper', wallpapers[wallpaperIndex]);
+  setStoredValue('mac-wallpaper', wallpapers[wallpaperIndex]);
 }
 function cycleWallpaper() {
   wallpaperIndex = (wallpaperIndex + 1) % wallpapers.length;
   applyWallpaper();
-  showToast(`Wallpaper changed to ${wallpapers[wallpaperIndex][0].toUpper...`);
+  const name = wallpapers[wallpaperIndex];
+  showToast(`Wallpaper changed to ${name[0].toUpperCase()}${name.slice(1)}`);
 }
 
 function showToast(message) {
@@ -94,6 +113,7 @@ function showToast(message) {
 }
 
 function openApp(appId) {
+  if (!appInfo[appId]) return;
   const existing = document.querySelector(`.window[data-app="${appId}"]`);
   if (existing) {
     existing.classList.remove('hidden', 'minimized');
@@ -144,12 +164,18 @@ function closeWindow(windowEl) {
   if (!document.querySelector(`.window[data-app="${appId}"]`)) {
     document.querySelector(`.dock-item[data-app="${appId}"]`)?.classList.remove('open');
   }
-  appName.textContent = 'Finder';
+  updateAppName();
 }
 
 function focusWindow(windowEl) {
   windowEl.style.zIndex = ++zTop;
   appName.textContent = appInfo[windowEl.dataset.app].title;
+}
+
+function updateAppName() {
+  const activeWindow = Array.from(document.querySelectorAll('.window:not(.minimized)'))
+    .sort((a, b) => Number(b.style.zIndex) - Number(a.style.zIndex))[0];
+  appName.textContent = activeWindow ? appInfo[activeWindow.dataset.app].title : 'Finder';
 }
 
 function makeDraggable(windowEl) {
@@ -187,26 +213,59 @@ function renderFinder(container) {
       : name === 'Projects' ? ['Portfolio', 'Experiments', 'Archive'] : ['Welcome.txt', 'Read me.pdf', 'Untitled folder']).map(item => `<button class="file-item"><span class="folder-icon"></span><span>${item}</span></button>`).join('');
   }
   showFolder('Desktop');
-  container.query...`);
+  container.querySelector('.sidebar').addEventListener('click', event => {
+    const button = event.target.closest('[data-folder]');
+    if (!button) return;
+    container.querySelectorAll('.sidebar button').forEach(item => item.classList.remove('active'));
+    button.classList.add('active');
+    showFolder(button.dataset.folder);
+  });
 }
 
 function renderNotes(container) {
-  let notes = JSON.parse(localStorage.getItem('mac-notes') || 'null');
+  let notes = [];
+  const storedNotes = getStoredValue('mac-notes');
+  if (storedNotes) {
+    try {
+      const parsedNotes = JSON.parse(storedNotes);
+      if (Array.isArray(parsedNotes)) {
+        notes = parsedNotes
+          .filter(note => note && typeof note === 'object')
+          .map(note => ({
+            title: typeof note.title === 'string' ? note.title : 'Untitled',
+            body: typeof note.body === 'string' ? note.body : ''
+          }));
+      }
+    } catch (error) {
+      console.warn('Saved notes were invalid and could not be loaded.', error);
+    }
+  }
   if (!Array.isArray(notes) || !notes.length) notes = [{title:'Welcome', body:'Welcome to Notes!\n\nYour notes are saved automatically in this browser.'}];
   let active = 0;
   container.innerHTML = `<div class="notes-app"><aside class="notes-list"></aside><section class="notes-editor"><div class="notes-toolbar"><button id="addNote" title="New note">＋</button></div><input id="noteTitle"><textarea id="noteBody"></textarea></section></div>`;
   const list = container.querySelector('.notes-list');
   const title = container.querySelector('#noteTitle');
   const body = container.querySelector('#noteBody');
-  function save() { localStorage.setItem('mac-notes', JSON.stringify(notes)); }
+  function save() { setStoredValue('mac-notes', JSON.stringify(notes)); }
   function draw() {
     list.innerHTML = notes.map((note,i)=>`<button class="${i===active?'active':''}" data-index="${i}">${escapeHtml(note.title || 'Untitled')}</button>`).join('');
     title.value = notes[active].title; body.value = notes[active].body;
   }
   draw();
-  title.addEventListener('input', () => { notes[active].title = title.value; save(); draw(); title.focus(); });
+  title.addEventListener('input', () => {
+    notes[active].title = title.value;
+    save();
+    const activeItem = list.querySelector(`[data-index="${active}"]`);
+    if (activeItem) activeItem.textContent = title.value || 'Untitled';
+  });
   body.addEventListener('input', () => { notes[active].body = body.value; save(); });
-  list.addEventListener('click', event => { const button = event.target.closest('[data-index]'); if (!button) return; active = Number(button.dataset.index); draw(); });
+  list.addEventListener('click', event => {
+    const button = event.target.closest('[data-index]');
+    const index = button ? Number(button.dataset.index) : -1;
+    if (!Number.isInteger(index) || index < 0 || index >= notes.length) return;
+    active = index;
+    draw();
+  });
   container.querySelector('#addNote').addEventListener('click', () => { notes.unshift({title:'Untitled', body:''}); active=0; save(); draw(); title.select(); });
 }
 
@@ -243,8 +302,82 @@ function renderCalculator(container) {
     ['AC','function'],['+/−','function'],['%','function'],['÷','operator'],['7',''],['8',''],['9',''],['×','operator'],['4',''],['5',''],['6',''],['−','operator'],['1',''],['2',''],['3',''],['＋','operator'],['0','zero'],['.',''],['=','operator']
   ].map(([label,cls])=>`<button class="${cls}" data-key="${label}">${label}</button>`).join('')}</div></div>`;
   const display = container.querySelector('.calc-display');
-  let expression = '';
-  container.query...`;
+  let displayValue = '0';
+  let storedValue = null;
+  let pendingOperator = null;
+  let waitingForOperand = false;
+
+  function updateDisplay() {
+    display.textContent = displayValue;
+  }
+
+  function calculate(left, right, operator) {
+    if (operator === '＋') return left + right;
+    if (operator === '−') return left - right;
+    if (operator === '×') return left * right;
+    if (operator === '÷') return right === 0 ? null : left / right;
+    return right;
+  }
+
+  function formatResult(value) {
+    return String(Number(value.toPrecision(10)));
+  }
+
+  container.querySelector('.calc-grid').addEventListener('click', event => {
+    const button = event.target.closest('[data-key]');
+    if (!button) return;
+    const key = button.dataset.key;
+
+    if (/^\d$/.test(key)) {
+      displayValue = waitingForOperand || displayValue === '0' ? key : displayValue + key;
+      waitingForOperand = false;
+    } else if (key === '.') {
+      if (waitingForOperand) {
+        displayValue = '0.';
+        waitingForOperand = false;
+      } else if (!displayValue.includes('.')) {
+        displayValue += '.';
+      }
+    } else if (key === 'AC') {
+      displayValue = '0';
+      storedValue = null;
+      pendingOperator = null;
+      waitingForOperand = false;
+    } else if (key === '+/−') {
+      displayValue = String(Number(displayValue) * -1);
+    } else if (key === '%') {
+      displayValue = String(Number(displayValue) / 100);
+    } else if (key === '=') {
+      if (pendingOperator && storedValue !== null) {
+        const result = calculate(storedValue, Number(displayValue), pendingOperator);
+        displayValue = result === null ? 'Error' : formatResult(result);
+        storedValue = null;
+        pendingOperator = null;
+        waitingForOperand = true;
+        if (result === null) showToast('Cannot divide by zero.');
+      }
+    } else if (['＋', '−', '×', '÷'].includes(key)) {
+      const inputValue = Number(displayValue);
+      if (pendingOperator && !waitingForOperand && storedValue !== null) {
+        const result = calculate(storedValue, inputValue, pendingOperator);
+        if (result === null) {
+          displayValue = 'Error';
+          storedValue = null;
+          pendingOperator = null;
+          waitingForOperand = true;
+          showToast('Cannot divide by zero.');
+          updateDisplay();
+          return;
+        }
+        displayValue = formatResult(result);
+      }
+      storedValue = Number(displayValue);
+      pendingOperator = key;
+      waitingForOperand = true;
+    }
+
+    updateDisplay();
+  });
 }
 
 function renderAbout(container) {
@@ -282,7 +415,13 @@ spotlightResults.addEventListener('click', event => {
 });
 
 document.addEventListener('keydown', event => {
-  if ((event.ctrlKey || event.metaKey) && event.key.toLower...`);
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+    event.preventDefault();
+    openSpotlight();
+  }
+  if (spotlight.classList.contains('open') && event.key === 'Enter') {
+    spotlightResults.querySelector('.spotlight-result[data-app], .spotlight-result[data-action]')?.click();
+  }
   if (event.key === 'Escape') { closeSpotlight(); closeMenus(); }
 });
 
@@ -294,11 +433,11 @@ document.querySelectorAll('[data-app]').forEach(element => {
 });
 
 desktop.addEventListener('contextmenu', event => {
-  event.preventEvent();
+  event.preventDefault();
   if (event.target.closest('.window, .dock, .menu-bar, .spotlight')) return;
   closeMenus();
-  contextMenu.style.left = `${Math.min(event.clientX, innerWidth - 220)}px`;
-  contextMenu.style.top = `${Math.min(event.clientY, innerHeight - 220)}px`;
+  contextMenu.style.left = `${Math.max(0, Math.min(event.clientX, innerWidth - 220))}px`;
+  contextMenu.style.top = `${Math.max(29, Math.min(event.clientY, innerHeight - 220))}px`;
   contextMenu.classList.add('open');
 });
 
@@ -328,4 +467,5 @@ window.addEventListener('resize', () => {
 });
 
 function init() { document.getElementById('appearanceLabel').textContent = document.body.classList.contains('dark') ? 'Dark' : 'Light'; }
+init();
 init();

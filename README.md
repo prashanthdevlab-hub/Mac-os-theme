@@ -24,4 +24,15 @@ Then visit `http://localhost:8000`.
 
 ## Notes
 
-This is a browser UI simulation and does not provide access to a real filesystem or operating system.
+This is a browser UI simulation and does not provide access to a real filesystem or operating system. Theme, wallpaper, and notes are stored in the browser's local storage on this device.
+
+## Security
+
+- The page applies a Content Security Policy that blocks inline scripts, plugins, and untrusted network connections.
+- Wallpapers load from Unsplash; the policy only permits images from `images.unsplash.com`.
+- Notes are rendered as text and are not executed as HTML. Browser storage is unencrypted and should not be used for sensitive information.
+- This static demo has no server-side authentication or backend. Add equivalent HTTP security headers in your hosting provider for protections that cannot be set by a page meta tag.
+
+## Deploy to GitHub Pages
+
+The workflow in `.github/workflows/deploy.yml` publishes the static site after changes reach `main`. In the repository settings, set **Pages → Build and deployment → Source** to **GitHub Actions**. The first successful run will publish the site at `https://prashanthdevlab-hub.github.io/Mac-os-theme/`.
