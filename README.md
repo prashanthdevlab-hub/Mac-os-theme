@@ -39,4 +39,4 @@ This is a browser UI simulation and does not provide access to a real filesystem
 
 ## Deploy to GitHub Pages
 
-The workflow in `.github/workflows/deploy.yml` publishes the static site after changes reach `main`. In the repository settings, set **Pages → Build and deployment → Source** to **GitHub Actions**. The first successful run will publish the site at `https://prashanthdevlab-hub.github.io/Mac-os-theme/`.
+Changes pushed to `main` are published only after the CI workflow passes. To deploy manually, run the **CI** workflow from the Actions tab on `main`; deployment follows after its checks succeed. In repository settings, set **Pages → Build and deployment → Source** to **GitHub Actions**. The site is published at `https://prashanthdevlab-hub.github.io/Mac-os-theme/`.

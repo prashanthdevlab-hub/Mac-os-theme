@@ -1,9 +1,9 @@
 name: CI
 
 on:
-  push:
-    branches-ignore: [main]
+  push: {}
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -14,6 +14,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
 
       - name: Install linters
         run: npm ci
@@ -46,10 +52,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check links in HTML
+      - name: Check links in site and README
         uses: lycheeverse/lychee-action@v2
         with:
-          args: --config lychee.toml index.html
+          args: --config lychee.toml index.html README.md
           fail: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
