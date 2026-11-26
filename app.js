@@ -623,5 +623,103 @@ window.addEventListener('resize', () => {
   });
 });
 
+// ── Bar-menu dropdowns ───────────────────────────────────────────────
+const barMenus = [
+  { buttonId: 'fileMenuButton',   menuId: 'fileMenu' },
+  { buttonId: 'editMenuButton',   menuId: 'editMenu' },
+  { buttonId: 'viewMenuButton',   menuId: 'viewMenu' },
+  { buttonId: 'goMenuButton',     menuId: 'goMenu' },
+  { buttonId: 'windowMenuButton', menuId: 'windowMenu' },
+  { buttonId: 'helpMenuButton',   menuId: 'helpMenu' },
+];
+
+function closeBarMenus(except) {
+  barMenus.forEach(({ buttonId, menuId }) => {
+    const btn = document.getElementById(buttonId);
+    const menu = document.getElementById(menuId);
+    if (menu === except) return;
+    menu.classList.remove('open');
+    menu.setAttribute('aria-hidden', 'true');
+    btn.setAttribute('aria-expanded', 'false');
+  });
+}
+
+barMenus.forEach(({ buttonId, menuId }) => {
+  const btn = document.getElementById(buttonId);
+  const menu = document.getElementById(menuId);
+
+  // Position dropdown under its button on each open
+  function positionMenu() {
+    const rect = btn.getBoundingClientRect();
+    menu.style.left = `${rect.left}px`;
+  }
+
+  btn.addEventListener('click', event => {
+    event.stopPropagation();
+    const isOpen = menu.classList.contains('open');
+    // Close apple menu and control center
+    appleMenu.classList.remove('open');
+    appleMenu.setAttribute('aria-hidden', 'true');
+    appleMenuButton.setAttribute('aria-expanded', 'false');
+    controlCenter.classList.remove('open');
+    controlCenter.setAttribute('aria-hidden', 'true');
+    controlButton.setAttribute('aria-expanded', 'false');
+    closeBarMenus(isOpen ? null : menu);
+    if (!isOpen) {
+      positionMenu();
+      menu.classList.add('open');
+      menu.setAttribute('aria-hidden', 'false');
+      btn.setAttribute('aria-expanded', 'true');
+      menu.querySelector('button')?.focus();
+    }
+  });
+
+  // Hover: switch to this menu if another bar menu is already open
+  btn.addEventListener('mouseenter', () => {
+    const anyOpen = barMenus.some(m => document.getElementById(m.menuId).classList.contains('open'));
+    if (anyOpen && !menu.classList.contains('open')) btn.click();
+  });
+
+  menu.addEventListener('click', event => {
+    const action = event.target.closest('[data-action]')?.dataset.action;
+    const app    = event.target.closest('[data-app]')?.dataset.app;
+    const msg    = event.target.closest('[data-msg]')?.dataset.msg;
+    if (!action) return;
+
+    if (action === 'openApp' && app)       openApp(app);
+    else if (action === 'newFolder')       showToast('New Folder');
+    else if (action === 'newWindow')       openApp('finder');
+    else if (action === 'closeWindow')     { const w = topWindow(); if (w) closeWindow(w); }
+    else if (action === 'minimizeWindow')  { const w = topWindow(); if (w) minimizeWindow(w); }
+    else if (action === 'zoomWindow')      { const w = topWindow(); if (w) w.classList.toggle('zoomed'); }
+    else if (action === 'toggleTheme')     toggleTheme();
+    else if (action === 'cycleWallpaper')  cycleWallpaper();
+    else if (action === 'spotlight')       openSpotlight();
+    else if (action === 'toastEdit' && msg) showToast(msg);
+
+    closeBarMenus(null);
+    barMenus.find(m => m.menuId === menuId)?.buttonId && document.getElementById(buttonId)?.setAttribute('aria-expanded', 'false');
+  });
+});
+
+// Helper: get the topmost non-minimized window
+function topWindow() {
+  return Array.from(document.querySelectorAll('.window:not(.minimized)'))
+    .sort((a, b) => Number(b.style.zIndex) - Number(a.style.zIndex))[0] || null;
+}
+
+// Close bar menus when clicking outside
+const _origCloseMenus = closeMenus;
+function closeMenus() {
+  _origCloseMenus();
+  closeBarMenus(null);
+}
+
+// Close bar menus on Escape
+const _barEscListener = event => {
+  if (event.key === 'Escape') closeBarMenus(null);
+};
+document.addEventListener('keydown', _barEscListener);
+
 function init() { document.getElementById('appearanceLabel').textContent = document.body.classList.contains('dark') ? 'Dark' : 'Light'; }
 init();
