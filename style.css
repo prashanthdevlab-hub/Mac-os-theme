@@ -190,4 +190,7 @@ body.dark .calc-grid button.function { background:rgba(65,65,68,.96); }
   *, *::before, *::after { scroll-behavior:auto!important; transition-duration:0.01ms!important; animation-duration:0.01ms!important; animation-iteration-count:1!important; }
 }
 
-input:focus-visible, textarea:focus-visible { outline:2px solid #0a84ff; outline-offset:-2px; }
+/* Bar-menu dropdowns (File, Edit, View, Go, Window, Help) */
+.bar-dropdown { top: 31px; min-width: 220px; }
+.bar-dropdown button { display: flex; justify-content: space-between; align-items: center; }
+.menu-shortcut { opacity: 0.5; font-size: 11px; margin-left: 24px; }

@@ -15,12 +15,12 @@
       <button class="menu-button apple-menu" id="appleMenuButton" aria-label="Apple menu" aria-haspopup="true" aria-expanded="false" aria-controls="appleMenu"></button>
       <button class="menu-button app-name" id="appName">Finder</button>
       <div class="menu-left">
-        <button class="menu-button file-menu" id="fileMenuButton">File</button>
-        <button class="menu-button">Edit</button>
-        <button class="menu-button">View</button>
-        <button class="menu-button">Go</button>
-        <button class="menu-button">Window</button>
-        <button class="menu-button">Help</button>
+        <button class="menu-button" id="fileMenuButton" aria-haspopup="true" aria-expanded="false" aria-controls="fileMenu">File</button>
+        <button class="menu-button" id="editMenuButton" aria-haspopup="true" aria-expanded="false" aria-controls="editMenu">Edit</button>
+        <button class="menu-button" id="viewMenuButton" aria-haspopup="true" aria-expanded="false" aria-controls="viewMenu">View</button>
+        <button class="menu-button" id="goMenuButton" aria-haspopup="true" aria-expanded="false" aria-controls="goMenu">Go</button>
+        <button class="menu-button" id="windowMenuButton" aria-haspopup="true" aria-expanded="false" aria-controls="windowMenu">Window</button>
+        <button class="menu-button" id="helpMenuButton" aria-haspopup="true" aria-expanded="false" aria-controls="helpMenu">Help</button>
       </div>
       <div class="menu-status">
         <button class="status-button" id="spotlightButton" aria-label="Search" aria-controls="spotlight" aria-expanded="false">⌕</button>
@@ -37,6 +37,73 @@
       <button data-action="appStore">App Store…</button>
       <hr>
       <button data-action="lock">Lock Screen</button>
+    </div>
+
+    <!-- File menu -->
+    <div class="menu-dropdown bar-dropdown" id="fileMenu" aria-hidden="true">
+      <button data-action="newFolder">New Folder</button>
+      <button data-action="newWindow">New Finder Window</button>
+      <hr>
+      <button data-action="openApp" data-app="finder">Open Finder</button>
+      <button data-action="openApp" data-app="notes">Open Notes</button>
+      <button data-action="openApp" data-app="terminal">Open Terminal</button>
+      <hr>
+      <button data-action="closeWindow">Close Window <span class="menu-shortcut">⌘W</span></button>
+    </div>
+
+    <!-- Edit menu -->
+    <div class="menu-dropdown bar-dropdown" id="editMenu" aria-hidden="true">
+      <button data-action="toastEdit" data-msg="Undo">Undo <span class="menu-shortcut">⌘Z</span></button>
+      <button data-action="toastEdit" data-msg="Redo">Redo <span class="menu-shortcut">⇧⌘Z</span></button>
+      <hr>
+      <button data-action="toastEdit" data-msg="Cut">Cut <span class="menu-shortcut">⌘X</span></button>
+      <button data-action="toastEdit" data-msg="Copy">Copy <span class="menu-shortcut">⌘C</span></button>
+      <button data-action="toastEdit" data-msg="Paste">Paste <span class="menu-shortcut">⌘V</span></button>
+      <hr>
+      <button data-action="toastEdit" data-msg="Select All">Select All <span class="menu-shortcut">⌘A</span></button>
+    </div>
+
+    <!-- View menu -->
+    <div class="menu-dropdown bar-dropdown" id="viewMenu" aria-hidden="true">
+      <button data-action="toastEdit" data-msg="As Icons">as Icons</button>
+      <button data-action="toastEdit" data-msg="As List">as List</button>
+      <button data-action="toastEdit" data-msg="As Columns">as Columns</button>
+      <hr>
+      <button data-action="toggleTheme">Toggle Dark Mode <span class="menu-shortcut">⌘D</span></button>
+      <button data-action="cycleWallpaper">Change Wallpaper</button>
+      <hr>
+      <button data-action="spotlight">Spotlight Search <span class="menu-shortcut">⌘K</span></button>
+    </div>
+
+    <!-- Go menu -->
+    <div class="menu-dropdown bar-dropdown" id="goMenu" aria-hidden="true">
+      <button data-action="openApp" data-app="finder">Finder</button>
+      <button data-action="openApp" data-app="notes">Notes</button>
+      <button data-action="openApp" data-app="terminal">Terminal</button>
+      <button data-action="openApp" data-app="calculator">Calculator</button>
+      <hr>
+      <button data-action="toastEdit" data-msg="Home">Home</button>
+      <button data-action="toastEdit" data-msg="Desktop">Desktop</button>
+      <button data-action="toastEdit" data-msg="Downloads">Downloads</button>
+    </div>
+
+    <!-- Window menu -->
+    <div class="menu-dropdown bar-dropdown" id="windowMenu" aria-hidden="true">
+      <button data-action="minimizeWindow">Minimize <span class="menu-shortcut">⌘M</span></button>
+      <button data-action="closeWindow">Close <span class="menu-shortcut">⌘W</span></button>
+      <button data-action="zoomWindow">Zoom</button>
+      <hr>
+      <button data-action="openApp" data-app="finder">Finder</button>
+      <button data-action="openApp" data-app="notes">Notes</button>
+      <button data-action="openApp" data-app="terminal">Terminal</button>
+      <button data-action="openApp" data-app="calculator">Calculator</button>
+    </div>
+
+    <!-- Help menu -->
+    <div class="menu-dropdown bar-dropdown" id="helpMenu" aria-hidden="true">
+      <button data-action="toastEdit" data-msg="macOS Help opened">macOS Help <span class="menu-shortcut">⌘?</span></button>
+      <hr>
+      <button data-action="openApp" data-app="about">About This Mac</button>
     </div>
 
     <div class="control-center" id="controlCenter" aria-hidden="true">
