@@ -1,0 +1,11 @@
+[output]
+format = "markdown"
+
+[filter]
+exclude = [
+  "https://images.unsplash.com",
+  "http://localhost",
+  "https://vertexaisearch.cloud.google.com"
+]
+max_retries = 3
+timeout = 15

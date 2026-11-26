@@ -2,8 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -15,6 +14,7 @@ concurrency:
 
 jobs:
   build:
+    name: Build — Stage static assets
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -22,18 +22,22 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
+
       - name: Stage static site
         run: |
           mkdir -p _site
           cp index.html style.css app.js _site/
+
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: _site
 
   deploy:
+    name: Deploy — Publish to GitHub Pages
     needs: build
     environment:
       name: github-pages

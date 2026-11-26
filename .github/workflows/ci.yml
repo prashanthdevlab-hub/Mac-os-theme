@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches-ignore: [main]
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  lint:
+    name: Lint — HTML / CSS / JS
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install linters
+        run: npm install -g htmlhint stylelint stylelint-config-standard eslint
+
+      - name: Lint HTML
+        run: htmlhint index.html --config .htmlhintrc
+
+      - name: Lint CSS
+        run: stylelint "style.css"
+
+      - name: Lint JS
+        run: eslint app.js
+
+      - name: Reviewdog — HTMLHint
+        uses: reviewdog/action-htmlhint@v1
+        if: github.event_name == 'pull_request'
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          reporter: github-pr-review
+          htmlhint_flags: index.html
+
+      - name: Reviewdog — Stylelint
+        uses: reviewdog/action-stylelint@v1
+        if: github.event_name == 'pull_request'
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          reporter: github-pr-review
+          stylelint_input: "style.css"
+
+      - name: Reviewdog — ESLint
+        uses: reviewdog/action-eslint@v1
+        if: github.event_name == 'pull_request'
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          reporter: github-pr-review
+          eslint_flags: app.js
+
+  security:
+    name: Secret Scan — gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  links:
+    name: Link Check — lychee
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check links in HTML
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: --config lychee.toml index.html
+          fail: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
