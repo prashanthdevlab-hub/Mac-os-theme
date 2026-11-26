@@ -1,6 +1,5 @@
 const desktop = document.getElementById('desktop');
 const windows = document.getElementById('windows');
-const dock = document.getElementById('dock');
 const spotlight = document.getElementById('spotlight');
 const spotlightInput = document.getElementById('spotlightInput');
 const spotlightResults = document.getElementById('spotlightResults');
@@ -691,7 +690,7 @@ barMenus.forEach(({ buttonId, menuId }) => {
     else if (action === 'newWindow')       openApp('finder');
     else if (action === 'closeWindow')     { const w = topWindow(); if (w) closeWindow(w); }
     else if (action === 'minimizeWindow')  { const w = topWindow(); if (w) minimizeWindow(w); }
-    else if (action === 'zoomWindow')      { const w = topWindow(); if (w) w.classList.toggle('zoomed'); }
+    else if (action === 'zoomWindow')      { const w = topWindow(); if (w) { const zoomed = w.classList.toggle('zoomed'); w.querySelector('.zoom-light')?.setAttribute('aria-pressed', String(zoomed)); } }
     else if (action === 'toggleTheme')     toggleTheme();
     else if (action === 'cycleWallpaper')  cycleWallpaper();
     else if (action === 'spotlight')       openSpotlight();

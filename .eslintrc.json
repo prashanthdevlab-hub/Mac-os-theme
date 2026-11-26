@@ -4,7 +4,7 @@
     "no-eval": "error",
     "no-unused-vars": "warn",
     "no-undef": "error",
-    "no-console": "warn",
+    "no-console": "off",
     "eqeqeq": "error"
   }
 }

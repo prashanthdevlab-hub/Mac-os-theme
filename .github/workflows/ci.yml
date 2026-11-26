@@ -17,16 +17,16 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install linters
-        run: npm install -g htmlhint stylelint stylelint-config-standard eslint
+        run: npm ci
 
       - name: Lint HTML
-        run: htmlhint index.html --config .htmlhintrc
+        run: npm run lint:html
 
       - name: Lint CSS
-        run: stylelint "style.css"
+        run: npm run lint:css
 
       - name: Lint JS
-        run: eslint app.js
+        run: npm run lint:js
 
       - name: Reviewdog — HTMLHint
         uses: reviewdog/action-htmlhint@v1
