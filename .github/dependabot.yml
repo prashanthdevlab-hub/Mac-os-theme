@@ -8,5 +8,3 @@ updates:
       prefix: "ci"
     labels:
       - "dependencies"
-    ignore:
-      - dependency-name: "reviewdog/action-htmlhint"

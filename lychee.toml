@@ -1,7 +1,4 @@
-[output]
 format = "markdown"
-
-[filter]
 exclude = [
   "https://images.unsplash.com",
   "http://localhost",
